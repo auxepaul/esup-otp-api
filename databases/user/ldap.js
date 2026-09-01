@@ -1,3 +1,4 @@
+import fs from 'fs';
 import * as fileUtils from '../../services/fileUtils.js';
 import * as errors from '../../services/errors.js';
 import { getUserDbProperties, getUid, searchAttributes, modifiableAttributes, allAttributes, attributes } from './userUtils.js';
@@ -17,11 +18,21 @@ export async function initialize() {
     errorIfMultiTenantContext();
 
     logger.info(fileUtils.getFileNameFromUrl(import.meta.url) + ' Initializing ldap connection');
-    client = new Client({
-        url: getUserDbProperties().uri,
-        timeout: getUserDbProperties().timeout,
-        connectTimeout: getUserDbProperties().connectTimeout,
-    });
+
+    const userDbProperties = getUserDbProperties();
+    const clientOptions = {
+        url: userDbProperties.uri,
+        timeout: userDbProperties.timeout,
+        connectTimeout: userDbProperties.connectTimeout,
+    };
+
+    if (userDbProperties.caCertificate) {
+        clientOptions.tlsOptions = {
+            ca: [fs.readFileSync(userDbProperties.caCertificate)],
+        };
+    }
+
+    client = new Client(clientOptions);
     await bindLdapIfNeeded();
     logger.info(fileUtils.getFileNameFromUrl(import.meta.url) + ' Ldap connection Initialized');
 }
