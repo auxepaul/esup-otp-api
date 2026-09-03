@@ -55,6 +55,7 @@ async function getClient() {
 export async function find_user(uid) {
     let user;
     try {
+        logger.debug("find_user_internal: " + uid);
         user = await find_user_internal(uid);
     } catch (error) {
         if (!isNoSuchObjectError(error)) {
